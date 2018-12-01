@@ -1,14 +1,15 @@
 
 % Eslik denetim matrisi
 H = [1 1 1 0 0 0 0 0;0 0 0 1 1 1 0 0;1 0 0 1 0 0 1 0;0 1 0 0 1 0 0 1];
-% Gönderilen Kod sözcüü c = [1 0 1 0 1 1 1 1];
-% Kod sözcüüne hat kodlaması yapılması x = zeros(1,size(c,2));
+% Gönderilen Kod sözcügü c = [1 0 1 0 1 1 1 1];
+% Kod sözcügüne hat kodlaması yapılması x = zeros(1,size(c,2));
 for i = 1:size(c,2)
     x(i) = (-1)^c(i);
 end;
 % Alınan kod sözcügü
 y = [0.2 0.2 -0.9 0.6 0.5 -1.1 -0.4 -1.2];
-% Alınan kod sözcügünün hat kodlamalı +-1’lere yuvarlatılması for i = 1:size(y,2)
+% Alınan kod sözcügünün hat kodlamalı +-1’lere yuvarlatılması 
+for i = 1:size(y,2)
     y_sign(i) = sign(y(i));
 end;
 % varyans
@@ -26,9 +27,9 @@ for i = 1:size(H,1)
             q0(i,j) = 1- q1(i,j);
         end;
 end; end;
-% özyineleme boyunca etkilenecek kod sözcüü çıktısı için balangıç
-48
-% deerinin verilmesi
+% özyineleme boyunca etkilenecek kod sözcügü çıktısı için baslangıç
+
+% degerinin verilmesi
 c_out = zeros(1,size(c,2)); for i = 1:size(c,2)
     if y_sign(i) == -1
        c_out(i) = 1;
@@ -38,7 +39,9 @@ end; end;
 ozyineleme = 1;
 r0 = zeros(size(H,1),size(H,2));
 r1 = zeros(size(H,1),size(H,2));
-% Elik denetim ilemi paritycheck = 0;
+
+% Eslik denetim islemi 
+paritycheck = 0;
 sendrom0 = c_out*H'; sendrom = mod(sendrom0,2);
 if sendrom == zeros(1,size(H,1))
    paritycheck = 1;
@@ -66,7 +69,6 @@ end;
 pi_product = zeros(size(temp_array,1),1); for t = 1:size(temp_array,1)
 pi_product(t) = 1 - 2*q1(j,temp_array(t)); end;
 if H(j,i) == 1
-49
 
                 r0(j,i) = 0.5 + 0.5*prod(pi_product);
                 r1(j,i) = 1- r0(j,i);
@@ -102,7 +104,6 @@ q1(i,j)= q_unnormalized_1(i,j)/(q_unnormalized_1(i,j) + q_unnormalized_0(i,j));
 end; end;
 end;
 % özyineleme çıktısı için sonsal olasılık oranlarının hesabı Q_unnormalized_1 = zeros(size(H,2),1);
-50
 
 Q_unnormalized_0 = zeros(size(H,2),1); Q1 = zeros(size(H,2),1);
 Q0 = zeros(size(H,2),1);
