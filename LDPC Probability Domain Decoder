@@ -1,24 +1,32 @@
 
-% Eslik denetim matrisi
+% Parity Check Matrix
 H = [1 1 1 0 0 0 0 0;0 0 0 1 1 1 0 0;1 0 0 1 0 0 1 0;0 1 0 0 1 0 0 1];
-% Gönderilen Kod sözcügü c = [1 0 1 0 1 1 1 1];
-% Kod sözcügüne hat kodlaması yapılması x = zeros(1,size(c,2));
+% The code word being sent over 
+c = [1 0 1 0 1 1 1 1];
+% Line coding being applied to the code word. 
+x = zeros(1,size(c,2));
 for i = 1:size(c,2)
     x(i) = (-1)^c(i);
 end;
-% Alınan kod sözcügü
+
+% Recived code word
 y = [0.2 0.2 -0.9 0.6 0.5 -1.1 -0.4 -1.2];
-% Alınan kod sözcügünün hat kodlamalı +-1’lere yuvarlatılması 
+
+% Rounding the received code word to +-1's 
 for i = 1:size(y,2)
     y_sign(i) = sign(y(i));
 end;
-% varyans
+
+% variance
 variance = 0.5;
+
 p = zeros(size(H,2),1);
 for i = 1:size(H,2)
     p(i) = 1/(1+exp(2*y(i)/variance));
 end;
-% q mesajları için özyineleme baslangıç degerlerinin verilmesi q1 = zeros(size(H,1),size(H,2));
+
+% setting initial iteration values for q messages 
+q1 = zeros(size(H,1),size(H,2));
 q0 = zeros(size(H,1),size(H,2));
 for i = 1:size(H,1)
     for j = 1:size(H,2)
@@ -26,32 +34,36 @@ for i = 1:size(H,1)
             q1(i,j) = p(j);
             q0(i,j) = 1- q1(i,j);
         end;
-end; end;
-% özyineleme boyunca etkilenecek kod sözcügü çıktısı için baslangıç
+    end;
+end;
 
-% degerinin verilmesi
-c_out = zeros(1,size(c,2)); for i = 1:size(c,2)
+% setting the initial value for the code word output that will ve affected throught the iteration
+c_out = zeros(1,size(c,2)); 
+for i = 1:size(c,2)
     if y_sign(i) == -1
        c_out(i) = 1;
     else
        c_out(i) = 0;
-end; end;
-ozyineleme = 1;
+    end; 
+end;
+iteration = 1;
 r0 = zeros(size(H,1),size(H,2));
 r1 = zeros(size(H,1),size(H,2));
 
-% Eslik denetim islemi 
+% Parity Check Process 
 paritycheck = 0;
-sendrom0 = c_out*H'; sendrom = mod(sendrom0,2);
+sendrom0 = c_out*H'; 
+sendrom = mod(sendrom0,2);
 if sendrom == zeros(1,size(H,1))
    paritycheck = 1;
 else
    paritycheck = 0;
 end;
-% özyineleme döngüsü
+
+% iteration loop
 while paritycheck == 0
-      % r mesajlarının hesabı
-      for j = 1:size(H,1)
+% calculation of r messages
+    for j = 1:size(H,1)
         for i = 1:size(H,2)
             if H(j,i) == 1
                 temp_array = zeros(size(H,1),1);
@@ -62,20 +74,23 @@ while paritycheck == 0
                             temp_array(counter) = k;
                             counter = counter + 1;
                         end;
-end;
-                    temp_array = nonzeros(temp_array);
+                    end;
+                temp_array = nonzeros(temp_array);
                 end;
-end;
-pi_product = zeros(size(temp_array,1),1); for t = 1:size(temp_array,1)
-pi_product(t) = 1 - 2*q1(j,temp_array(t)); end;
-if H(j,i) == 1
-
+            end;
+            pi_product = zeros(size(temp_array,1),1); 
+            for t = 1:size(temp_array,1)
+                pi_product(t) = 1 - 2*q1(j,temp_array(t)); 
+            end;
+            if H(j,i) == 1
                 r0(j,i) = 0.5 + 0.5*prod(pi_product);
                 r1(j,i) = 1- r0(j,i);
             end;
-end; end;
-q_unnormalized_0 = zeros(size(H,1),size(H,2)); q_unnormalized_1 = zeros(size(H,1),size(H,2));
-    % q mesajlarının hesabı
+        end; 
+    end;
+
+    q_unnormalized_0 = zeros(size(H,1),size(H,2)); q_unnormalized_1 = zeros(size(H,1),size(H,2));
+    % calculation of q messages
     for j = 1:size(H,2)
         for i = 1:size(H,1)
             if H(i,j) == 1
@@ -89,65 +104,80 @@ q_unnormalized_0 = zeros(size(H,1),size(H,2)); q_unnormalized_1 = zeros(size(H,1
                         end;
                     end;
                     temp_array = nonzeros(temp_array);
-end; end;
-if H(i,j) == 1
-pi_product = zeros(size(temp_array,1),1); for t = 1:size(temp_array,1)
-                   pi_product(t) = r0(temp_array(t),j);
-               end;
-q_unnormalized_0(i,j) = (1-p(j))*prod(pi_product);
-pi_product = zeros(size(temp_array,1),1); for t = 1:size(temp_array,1)
-                   pi_product(t) = r1(temp_array(t),j);
-               end;
-q_unnormalized_1(i,j) = p(j)*prod(pi_product);
-q0(i,j)= q_unnormalized_0(i,j)/(q_unnormalized_0(i,j) + q_unnormalized_1(i,j));
-q1(i,j)= q_unnormalized_1(i,j)/(q_unnormalized_1(i,j) + q_unnormalized_0(i,j));
-end; end;
-end;
-% özyineleme çıktısı için sonsal olasılık oranlarının hesabı Q_unnormalized_1 = zeros(size(H,2),1);
+                end; 
+            end;
+            if H(i,j) == 1
+                pi_product = zeros(size(temp_array,1),1); 
+                for t = 1:size(temp_array,1)
+                    pi_product(t) = r0(temp_array(t),j);
+                end;
+                q_unnormalized_0(i,j) = (1-p(j))*prod(pi_product);
+                pi_product = zeros(size(temp_array,1),1); 
+                for t = 1:size(temp_array,1)
+                    pi_product(t) = r1(temp_array(t),j);
+                end;
+                q_unnormalized_1(i,j) = p(j)*prod(pi_product);
+                q0(i,j)= q_unnormalized_0(i,j)/(q_unnormalized_0(i,j) + q_unnormalized_1(i,j));
+                q1(i,j)= q_unnormalized_1(i,j)/(q_unnormalized_1(i,j) + q_unnormalized_0(i,j));
+            end; 
+        end;
+    end;
 
-Q_unnormalized_0 = zeros(size(H,2),1); Q1 = zeros(size(H,2),1);
-Q0 = zeros(size(H,2),1);
-for j = 1:size(H,2)
+    % calcuation of finite probability ratios for the iteration output 
+    Q_unnormalized_1 = zeros(size(H,2),1);
+
+    Q_unnormalized_0 = zeros(size(H,2),1); Q1 = zeros(size(H,2),1);
+    Q0 = zeros(size(H,2),1);
+    for j = 1:size(H,2)
         temp_array = zeros(size(H,1),1);
         counter = 1;
         for i = 1:size(H,1)
             if H(i,j) == 1
                 temp_array(counter) = i;
                 counter = counter + 1;
-end; end;
-temp_array = nonzeros(temp_array); pi_product = zeros(size(temp_array,1),1); for t = 1:size(temp_array)
+            end; 
+        end;
+        temp_array = nonzeros(temp_array); 
+        pi_product = zeros(size(temp_array,1),1); 
+        for t = 1:size(temp_array)
             pi_product(t) = r0(temp_array(t),j);
         end;
-Q_unnormalized_0(j) = (1-p(j))*prod(pi_product); for t = 1:size(temp_array)
+        Q_unnormalized_0(j) = (1-p(j))*prod(pi_product); 
+        for t = 1:size(temp_array)
             pi_product(t) = r1(temp_array(t),j);
         end;
-Q_unnormalized_1(j) = p(j)*prod(pi_product);
-Q0(j) = Q_unnormalized_0(j)/(Q_unnormalized_0(j) + Q_unnormalized_1(j));
-Q1(j) = Q_unnormalized_1(j)/(Q_unnormalized_1(j) + Q_unnormalized_0(j));
-end;
-% Sonsal olasılık oranlarının kod sözcüü için ikili hale % dönütülülmesi
-for i = 1:size(Q1,1)
-        if Q1(i) > Q0(i)
-           c_out(i) = 1;
-        else
-           c_out(i) = 0;
-end; end;
-% Özyineleme sonucu elde edilen kod sözcüü ile elik denetimin % tekrarlanması
-sendrom0 = c_out*H';
-sendrom = mod(sendrom0,2);
-    if sendrom == zeros(1,size(H,1))
-       paritycheck = 1;
-    else
-       paritycheck = 0;
-end;
-51
+        Q_unnormalized_1(j) = p(j)*prod(pi_product);
+        Q0(j) = Q_unnormalized_0(j)/(Q_unnormalized_0(j) + Q_unnormalized_1(j));
+        Q1(j) = Q_unnormalized_1(j)/(Q_unnormalized_1(j) + Q_unnormalized_0(j));
+    end;
 
-% Özyineleme çıktısının ekrana yansıtılması disp('ozyineleme');
-disp(ozyineleme);
-disp('Q1');
+    % Converting finite probability ratios to binary form for code word.
+    for i = 1:size(Q1,1)
+        if Q1(i) > Q0(i)
+            c_out(i) = 1;
+        else
+            c_out(i) = 0;
+        end; 
+    end;
+
+    % Repeating parity check with the code word output of the iteration
+    sendrom0 = c_out*H';
+    sendrom = mod(sendrom0,2);
+    if sendrom == zeros(1,size(H,1))
+        paritycheck = 1;
+    else
+        paritycheck = 0;
+    end;
+
+    % Printing iteration output 
+    disp('iteration');
+    disp(iteration);
+    disp('Q1');
     disp(Q1');
     disp(c_out);
-    ozyineleme = ozyineleme + 1;
-% özyineleme sayısının tavan sınırı kontrolü if ozyineleme == 20
-break; end;
+    iteration = iteration + 1;
+    % maximum iteration control
+    if iteration == 20
+    break; 
+    end;
 end;
